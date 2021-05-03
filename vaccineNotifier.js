@@ -24,7 +24,7 @@ const SLACK_HOOK = process.env.SLACK_HOOK
 async function main(){
     try {
         cron.schedule('* * * * *', async () => {
-             generalNotify("Hold tits! checking vaccine availability!")
+             generalNotify("checking vaccine availability!")
              await checkAvailability();
         });
     } catch (e) {
@@ -71,19 +71,25 @@ function getSlotsForDate(DATE) {
 }).then(res => res.json())
         .then(function (data) {
             let centers = data.centers
-            const availableCenters = []
+            const availableCenters = {}
             centers.forEach(function(center) {
                 
                 let sessions = center.sessions;
                 let validSlots = sessions.filter(slot => slot.min_age_limit <= 31 &&  slot.available_capacity > 0)
                 console.log({date:DATE, validSlots: validSlots.length})
                 if(validSlots.length > 0) {
-                    center['validSlots'] = validSlots
+                    if center['validSlots'] {
+                      center['validSlots'] = center['validSlots'] + validSlots    
+                    } else {
+                      center['validSlots'] = validSlots
+                    }
                     delete center['sessions']
-                    availableCenters.push(center)
+                    availableCenters[center_id] = center
+                }
+                if (Object.keys(availableCenters) > 0) {
                     notifyMe(availableCenters);
                 } else {
-                    generalNotify("None found yet, can leave tits now.")
+                    generalNotify("None found yet")
                 }
             });
             
