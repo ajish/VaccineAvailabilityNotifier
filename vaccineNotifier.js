@@ -18,6 +18,7 @@ To close the app, run: pm2 stop vaccineNotifier.js && pm2 delete vaccineNotifier
 const PINCODE = process.env.PINCODE
 const EMAIL = process.env.EMAIL
 const AGE = process.env.AGE
+const SLACK_HOOK = process.env.SLACK_HOOK
 
 
 async function main(){
@@ -100,7 +101,7 @@ async function notifyMe(validSlots){
     //     }
     // })
 
-    fetch('https://hooks.slack.com/services/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', {
+    fetch(SLACK_HOOK, {
         method: 'POST',
         headers: {
             'Content-type': 'application/json',
@@ -112,7 +113,7 @@ async function notifyMe(validSlots){
 };
 
 async function generalNotify(msg) {
-    fetch('https://hooks.slack.com/services/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', {
+    fetch(SLACK_HOOK, {
         method: 'POST',
         headers: {
             'Content-type': 'application/json',
