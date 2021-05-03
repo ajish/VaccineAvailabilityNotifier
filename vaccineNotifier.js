@@ -85,16 +85,17 @@ function getSlotsForDate(DATE, districtId) {
             console.log("for District: "+ districtName[districtId] +" date: " + DATE + " count: " + sessions.length)
             
             let validSlots = sessions.filter(slot => slot.min_age_limit <= 18 &&  slot.available_capacity > 0)
-            console.log({date:DATE, validSlots: validSlots.length})
+            console.log({date:DATE, districtId: districtId, validSlots: validSlots.length})
             if(validSlots.length > 0) {
                 notifyMe(validSlots, districtName[districtId]);
             } else {
-                console.log("None found yet for post date: " + DATE)
+                console.log("None found yet for post date: " + DATE + " in district: " + districtName[districtId])
             }
             
         })
         .catch(function (error) {
             console.log(error);
+            generalNotify("Error Occured:\n" + error)
         });
 }
 
