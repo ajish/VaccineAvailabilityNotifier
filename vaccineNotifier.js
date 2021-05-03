@@ -23,10 +23,12 @@ const SLACK_HOOK = process.env.SLACK_HOOK
 
 async function main(){
     try {
-        cron.schedule('* * * * *', async () => {
-             generalNotify("checking vaccine availability!")
-             await checkAvailability();
-        });
+        // cron.schedule('* * * * *', async () => {
+        //      generalNotify("checking vaccine availability!")
+        //      await checkAvailability();
+        // });
+        generalNotify("checking vaccine availability!")
+        await checkAvailability();
     } catch (e) {
         console.log('an error occured: ' + JSON.stringify(e, null, 2));
         throw e;
@@ -78,7 +80,7 @@ function getSlotsForDate(DATE) {
                 let validSlots = sessions.filter(slot => slot.min_age_limit <= 31 &&  slot.available_capacity > 0)
                 console.log({date:DATE, validSlots: validSlots.length})
                 if(validSlots.length > 0) {
-                    if center['validSlots'] {
+                    if (center['validSlots']) {
                       center['validSlots'] = center['validSlots'] + validSlots    
                     } else {
                       center['validSlots'] = validSlots
@@ -86,12 +88,13 @@ function getSlotsForDate(DATE) {
                     delete center['sessions']
                     availableCenters[center_id] = center
                 }
-                if (Object.keys(availableCenters) > 0) {
-                    notifyMe(availableCenters);
-                } else {
-                    generalNotify("None found yet")
-                }
+                
             });
+            if (Object.keys(availableCenters) > 0) {
+                notifyMe(availableCenters);
+            } else {
+                generalNotify("None found yet")
+            }
             
         })
         .catch(function (error) {
