@@ -42,8 +42,8 @@ async function checkAvailability() {
 
     let datesArray = await fetchNext2weeks();
     console.log(datesArray)
-    [265, 305].forEach(districtId => {
-        datesArray.forEach(date => {
+    datesArray.forEach(date => {
+        [265, 305].forEach(districtId => {
             getSlotsForDate(date, districtId);
         })    
     })
@@ -82,7 +82,7 @@ function getSlotsForDate(DATE, districtId) {
         .then(function (data) {
 
             let sessions = data.sessions
-            console.log("for District: "+ districtName[districtId] +" date: " + DATE + "count:" + sessions.length)
+            console.log("for District: "+ districtName[districtId] +" date: " + DATE + " count: " + sessions.length)
             
             let validSlots = sessions.filter(slot => slot.min_age_limit <= 18 &&  slot.available_capacity > 0)
             console.log({date:DATE, validSlots: validSlots.length})
