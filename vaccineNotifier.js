@@ -75,7 +75,7 @@ function getSlotsForDate(DATE) {
         .then(function (data) {
 
             let sessions = data.sessions
-            console.log("for date: " + DATE + "count:" + sessions.count)
+            console.log("for date: " + DATE + "count:" + sessions.length)
             const availableCenters = []
             
             let validSlots = sessions.filter(slot => slot.min_age_limit <= 31 &&  slot.available_capacity > 0)
