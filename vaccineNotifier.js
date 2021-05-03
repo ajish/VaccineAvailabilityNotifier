@@ -23,12 +23,11 @@ const SLACK_HOOK = process.env.SLACK_HOOK
 
 async function main(){
     try {
-        // cron.schedule('* * * * *', async () => {
-        //      generalNotify("checking vaccine availability!")
-        //      await checkAvailability();
-        // });
-        generalNotify("checking vaccine availability!")
-        await checkAvailability();
+        cron.schedule('* * * * *', async () => {
+             console.log("checking vaccine availability!")
+             await checkAvailability();
+        });
+
     } catch (e) {
         console.log('an error occured: ' + JSON.stringify(e, null, 2));
         throw e;
@@ -82,7 +81,7 @@ function getSlotsForDate(DATE) {
             if(validSlots.length > 0) {
                 notifyMe(validSlots);
             } else {
-                generalNotify("None found yet for post date: " + DATE)
+                console.log("None found yet for post date: " + DATE)
             }
             
         })
@@ -105,7 +104,7 @@ async function notifyMe(validSlots){
             'Content-type': 'application/json',
             'Content-Type': 'application/json; charset=UTF-8'
         },
-        body: JSON.stringify({"text":"@channel \n" + slotDetails, "link_names": 1})
+        body: JSON.stringify({"text":"@channel slots found: \n" + slotDetails, "link_names": 1})
     }).then((e) => console.log(e));
 
 };
