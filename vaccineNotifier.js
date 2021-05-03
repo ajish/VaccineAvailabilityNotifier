@@ -76,13 +76,11 @@ function getSlotsForDate(DATE) {
 
             let sessions = data.sessions
             console.log("for date: " + DATE + "count:" + sessions.length)
-            const availableCenters = []
             
-            let validSlots = sessions.filter(slot => slot.min_age_limit <= 31 &&  slot.available_capacity > 0)
+            let validSlots = sessions.filter(slot => slot.min_age_limit <= 45 &&  slot.available_capacity > 0)
             console.log({date:DATE, validSlots: validSlots.length})
             if(validSlots.length > 0) {
-                availableCenters += validSlots
-                notifyMe(availableCenters);
+                notifyMe(validSlots);
             } else {
                 generalNotify("None found yet for post date: " + DATE)
             }
