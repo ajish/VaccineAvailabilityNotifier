@@ -100,7 +100,7 @@ async function notifyMe(validSlots){
     //     }
     // })
 
-    fetch('https://hooks.slack.com/services/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', {
+    fetch('https://hooks.slack.com/services/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', {
         method: 'POST',
         headers: {
             'Content-type': 'application/json',
