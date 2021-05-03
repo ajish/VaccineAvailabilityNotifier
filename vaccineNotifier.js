@@ -38,22 +38,23 @@ async function main(){
 async function checkAvailability() {
 
     let datesArray = await fetchNext2weeks();
+    console.log(datesArray)
     datesArray.forEach(date => {
         getSlotsForDate(date);
     })
 }
 
 function getSlotsForDate(DATE) {
-    let config = {
-        method: 'get',
-        url: 'https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/findByPin?pincode=' + PINCODE + '&date=' + DATE,
-        headers: {
-            'accept': 'application/json',
-            'Accept-Language': 'hi_IN'
-        }
-    };
-
-    fetch("https://cdn-api.co-vin.in/api/v2/appointment/sessions/calendarByDistrict?district_id=265&date=" + DATE, {
+    // let config = {
+    //     method: 'get',
+    //     url: 'https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/findByPin?pincode=' + PINCODE + '&date=' + DATE,
+    //     headers: {
+    //         'accept': 'application/json',
+    //         'Accept-Language': 'hi_IN'
+    //     }
+    // };
+    console.log(DATE)
+    fetch("https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/findByDistrict?district_id=265&date=" + DATE, {
   "headers": {
     "accept": "application/json, text/plain, */*",
     "accept-language": "en-GB,en-US;q=0.9,en;q=0.8",
@@ -72,28 +73,18 @@ function getSlotsForDate(DATE) {
   "mode": "cors"
 }).then(res => res.json())
         .then(function (data) {
-            let centers = data.centers
-            const availableCenters = {}
-            centers.forEach(function(center) {
-                
-                let sessions = center.sessions;
-                let validSlots = sessions.filter(slot => slot.min_age_limit <= 31 &&  slot.available_capacity > 0)
-                console.log({date:DATE, validSlots: validSlots.length})
-                if(validSlots.length > 0) {
-                    if (center['validSlots']) {
-                      center['validSlots'] = center['validSlots'] + validSlots    
-                    } else {
-                      center['validSlots'] = validSlots
-                    }
-                    delete center['sessions']
-                    availableCenters[center_id] = center
-                }
-                
-            });
-            if (Object.keys(availableCenters) > 0) {
+
+            let sessions = data.sessions
+            console.log("for date: " + DATE + "count:" + sessions.count)
+            const availableCenters = []
+            
+            let validSlots = sessions.filter(slot => slot.min_age_limit <= 31 &&  slot.available_capacity > 0)
+            console.log({date:DATE, validSlots: validSlots.length})
+            if(validSlots.length > 0) {
+                availableCenters += validSlots
                 notifyMe(availableCenters);
             } else {
-                generalNotify("None found yet")
+                generalNotify("None found yet for post date: " + DATE)
             }
             
         })
