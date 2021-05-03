@@ -18,6 +18,7 @@ const PINCODE = process.env.PINCODE
 const EMAIL = process.env.EMAIL
 const AGE = process.env.AGE
 
+
 async function main(){
     try {
         cron.schedule('* * * * *', async () => {
@@ -31,7 +32,7 @@ async function main(){
 
 async function checkAvailability() {
 
-    let datesArray = await fetchNext10Days();
+    let datesArray = await fetchNext2weeks();
     datesArray.forEach(date => {
         getSlotsForDate(date);
     })
@@ -47,14 +48,39 @@ function getSlotsForDate(DATE) {
         }
     };
 
-    axios(config)
-        .then(function (slots) {
-            let sessions = slots.data.sessions;
-            let validSlots = sessions.filter(slot => slot.min_age_limit <= AGE &&  slot.available_capacity > 0)
-            console.log({date:DATE, validSlots: validSlots.length})
-            if(validSlots.length > 0) {
-                notifyMe(validSlots);
-            }
+    fetch("https://cdn-api.co-vin.in/api/v2/appointment/sessions/calendarByDistrict?district_id=265&date=" + DATE, {
+  "headers": {
+    "accept": "application/json, text/plain, */*",
+    "accept-language": "en-GB,en-US;q=0.9,en;q=0.8",
+    "authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX25hbWUiOiJlMzNmNWNiNC1iZjRhLTRjYTktYWViZi1jNDRiYjdmYWU1NzEiLCJ1c2VyX2lkIjoiZTMzZjVjYjQtYmY0YS00Y2E5LWFlYmYtYzQ0YmI3ZmFlNTcxIiwidXNlcl90eXBlIjoiQkVORUZJQ0lBUlkiLCJtb2JpbGVfbnVtYmVyIjo4MTk3MDY4OTY1LCJiZW5lZmljaWFyeV9yZWZlcmVuY2VfaWQiOjI3MTIyMTcwNDEyMDMwLCJ1YSI6Ik1vemlsbGEvNS4wIChNYWNpbnRvc2g7IEludGVsIE1hYyBPUyBYIDEwXzE1XzIpIEFwcGxlV2ViS2l0LzUzNy4zNiAoS0hUTUwsIGxpa2UgR2Vja28pIENocm9tZS85MC4wLjQ0MzAuODUgU2FmYXJpLzUzNy4zNiIsImRhdGVfbW9kaWZpZWQiOiIyMDIxLTA1LTAzVDA1OjMwOjIzLjk2OFoiLCJpYXQiOjE2MjAwMTk4MjMsImV4cCI6MTYyMDAyMDcyM30.uf40g5SSq5j4-BRQDveQ7hBjQh-iPpamA1-R8dLAMPg",
+    "if-none-match": "W/\"505a-T3xkwtyYKW5fd38xwXM6Pvj7dUI\"",
+    "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"90\", \"Google Chrome\";v=\"90\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "cross-site"
+  },
+  "referrer": "https://selfregistration.cowin.gov.in/",
+  "referrerPolicy": "strict-origin-when-cross-origin",
+  "body": null,
+  "method": "GET",
+  "mode": "cors"
+}).then(res => res.json())
+        .then(function (data) {
+            let centers = data.centers
+            
+            centers.forEach(function(center) {
+                const availableCenters = {}
+                let sessions = slots.data.sessions;
+                let validSlots = sessions.filter(slot => slot.min_age_limit <= 45 &&  slot.available_capacity > 0)
+                console.log({date:DATE, validSlots: validSlots.length})
+                if(validSlots.length > 0) {
+                    center['validSlots'] = validSlots
+                    delete center['sessions']
+                    availableCenters.push(center)
+                    notifyMe(availableCenters);
+                }
+            });
         })
         .catch(function (error) {
             console.log(error);
@@ -65,20 +91,30 @@ async function
 
 notifyMe(validSlots){
     let slotDetails = JSON.stringify(validSlots, null, '\t');
-    notifier.sendEmail(EMAIL, 'VACCINE AVAILABLE', slotDetails, (err, result) => {
-        if(err) {
-            console.error({err});
-        }
-    })
+    // notifier.sendEmail(EMAIL, 'VACCINE AVAILABLE', slotDetails, (err, result) => {
+    //     if(err) {
+    //         console.error({err});
+    //     }
+    // })
+
+    fetch('https://hooks.slack.com/services/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', {
+        method: 'POST',
+        headers: {
+            'Content-type': 'application/json',
+            'Content-Type': 'application/json; charset=UTF-8'
+        },
+        body: JSON.stringify({"text":"@channel \n" + "slotDetails", "link_names": 1})
+    }).then((e) => console.log(e));
+
 };
 
 async function fetchNext10Days(){
     let dates = [];
     let today = moment();
-    for(let i = 0 ; i < 10 ; i ++ ){
+    for(let i = 0 ; i < 2 ; i ++ ){
         let dateString = today.format('DD-MM-YYYY')
         dates.push(dateString);
-        today.add(1, 'day');
+        today.add(7, 'day');
     }
     return dates;
 }
