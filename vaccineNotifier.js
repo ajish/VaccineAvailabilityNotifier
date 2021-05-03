@@ -19,6 +19,10 @@ const PINCODE = process.env.PINCODE
 const EMAIL = process.env.EMAIL
 const AGE = process.env.AGE
 const SLACK_HOOK = process.env.SLACK_HOOK
+const districtName = {
+  265: "Bangalore Urban",
+  305: "Kozhikode"        
+}
 
 
 async function main(){
@@ -38,12 +42,15 @@ async function checkAvailability() {
 
     let datesArray = await fetchNext2weeks();
     console.log(datesArray)
-    datesArray.forEach(date => {
-        getSlotsForDate(date);
+    [265, 305].forEach(districtId => {
+        datesArray.forEach(date => {
+            getSlotsForDate(date, districtId);
+        })    
     })
+    
 }
 
-function getSlotsForDate(DATE) {
+function getSlotsForDate(DATE, districtId) {
     // let config = {
     //     method: 'get',
     //     url: 'https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/findByPin?pincode=' + PINCODE + '&date=' + DATE,
@@ -52,8 +59,9 @@ function getSlotsForDate(DATE) {
     //         'Accept-Language': 'hi_IN'
     //     }
     // };
-    console.log(DATE)
-    fetch("https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/findByDistrict?district_id=265&date=" + DATE, {
+
+    console.log(DATE, districtId)
+    fetch("https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/findByDistrict?district_id="+districtId+"&date=" + DATE, {
   "headers": {
     "accept": "application/json, text/plain, */*",
     "accept-language": "en-GB,en-US;q=0.9,en;q=0.8",
@@ -74,12 +82,12 @@ function getSlotsForDate(DATE) {
         .then(function (data) {
 
             let sessions = data.sessions
-            console.log("for date: " + DATE + "count:" + sessions.length)
+            console.log("for District: "+ districtName[districtId] +" date: " + DATE + "count:" + sessions.length)
             
-            let validSlots = sessions.filter(slot => slot.min_age_limit <= 45 &&  slot.available_capacity > 0)
+            let validSlots = sessions.filter(slot => slot.min_age_limit <= 18 &&  slot.available_capacity > 0)
             console.log({date:DATE, validSlots: validSlots.length})
             if(validSlots.length > 0) {
-                notifyMe(validSlots);
+                notifyMe(validSlots, districtName[districtId]);
             } else {
                 console.log("None found yet for post date: " + DATE)
             }
@@ -90,7 +98,7 @@ function getSlotsForDate(DATE) {
         });
 }
 
-async function notifyMe(validSlots){
+async function notifyMe(validSlots, districtName){
     let slotDetails = JSON.stringify(validSlots, null, '\t');
     // notifier.sendEmail(EMAIL, 'VACCINE AVAILABLE', slotDetails, (err, result) => {
     //     if(err) {
@@ -104,7 +112,7 @@ async function notifyMe(validSlots){
             'Content-type': 'application/json',
             'Content-Type': 'application/json; charset=UTF-8'
         },
-        body: JSON.stringify({"text":"@channel slots found: \n" + slotDetails, "link_names": 1})
+        body: JSON.stringify({"text":"@channel slots found in "+ districtName +": \n" + slotDetails, "link_names": 1})
     }).then((e) => console.log(e));
 
 };
