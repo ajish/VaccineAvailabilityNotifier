@@ -1,8 +1,9 @@
 require('dotenv').config()
 const moment = require('moment');
 const cron = require('node-cron');
-const axios = require('axios');
+// const axios = require('axios');
 const notifier = require('./notifier');
+const fetch = require('node-fetch');
 /**
 Step 1) Enable application access on your gmail with steps given here:
  https://support.google.com/accounts/answer/185833?p=InvalidSecondFactor&visit_id=637554658548216477-2576856839&rd=1
@@ -22,6 +23,7 @@ const AGE = process.env.AGE
 async function main(){
     try {
         cron.schedule('* * * * *', async () => {
+             generalNotify("Hold tits! checking vaccine availability!")
              await checkAvailability();
         });
     } catch (e) {
@@ -68,28 +70,29 @@ function getSlotsForDate(DATE) {
 }).then(res => res.json())
         .then(function (data) {
             let centers = data.centers
-            
+            const availableCenters = []
             centers.forEach(function(center) {
-                const availableCenters = {}
-                let sessions = slots.data.sessions;
-                let validSlots = sessions.filter(slot => slot.min_age_limit <= 45 &&  slot.available_capacity > 0)
+                
+                let sessions = center.sessions;
+                let validSlots = sessions.filter(slot => slot.min_age_limit <= 31 &&  slot.available_capacity > 0)
                 console.log({date:DATE, validSlots: validSlots.length})
                 if(validSlots.length > 0) {
                     center['validSlots'] = validSlots
                     delete center['sessions']
                     availableCenters.push(center)
                     notifyMe(availableCenters);
+                } else {
+                    generalNotify("None found yet, can leave tits now.")
                 }
             });
+            
         })
         .catch(function (error) {
             console.log(error);
         });
 }
 
-async function
-
-notifyMe(validSlots){
+async function notifyMe(validSlots){
     let slotDetails = JSON.stringify(validSlots, null, '\t');
     // notifier.sendEmail(EMAIL, 'VACCINE AVAILABLE', slotDetails, (err, result) => {
     //     if(err) {
@@ -97,18 +100,29 @@ notifyMe(validSlots){
     //     }
     // })
 
-    fetch('https://hooks.slack.com/services/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', {
+    fetch('https://hooks.slack.com/services/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', {
         method: 'POST',
         headers: {
             'Content-type': 'application/json',
             'Content-Type': 'application/json; charset=UTF-8'
         },
-        body: JSON.stringify({"text":"@channel \n" + "slotDetails", "link_names": 1})
+        body: JSON.stringify({"text":"@channel \n" + slotDetails, "link_names": 1})
     }).then((e) => console.log(e));
 
 };
 
-async function fetchNext10Days(){
+async function generalNotify(msg) {
+    fetch('https://hooks.slack.com/services/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', {
+        method: 'POST',
+        headers: {
+            'Content-type': 'application/json',
+            'Content-Type': 'application/json; charset=UTF-8'
+        },
+        body: JSON.stringify({"text":msg})
+    }).then((e) => console.log(e));
+}
+
+async function fetchNext2weeks(){
     let dates = [];
     let today = moment();
     for(let i = 0 ; i < 2 ; i ++ ){
